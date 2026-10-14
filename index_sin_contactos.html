@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portfolio ASIR · Infraestructura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: panel de rack — columna central de 1120px, secciones como "bahías" separadas por una regla con etiqueta tipo puerto */
+:root{
+  --bg:#EDF1F5; --surface:#FFFFFF; --sunk:#E3E9EF; --ink:#13202C; --muted:#56667A; --line:#CFD8E2;
+  --accent:#1D5BCF; --accent-soft:#DCE7FA; --ok:#23845A; --ok-soft:#DCF1E6; --warn:#B26A00;
+  --term-bg:#0F1720; --term-fg:#C9D6E2; --term-dim:#6F8193;
+  --f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D131A; --surface:#141D27; --sunk:#101820; --ink:#E3E9EF; --muted:#94A3B3; --line:#243243;
+  --accent:#6F9BF2; --accent-soft:#1B2B47; --ok:#4DC48D; --ok-soft:#14322A; --warn:#E3A43C;
+  --term-bg:#081018; --term-fg:#C9D6E2; --term-dim:#62748A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D131A; --surface:#141D27; --sunk:#101820; --ink:#E3E9EF; --muted:#94A3B3; --line:#243243;
+  --accent:#6F9BF2; --accent-soft:#1B2B47; --ok:#4DC48D; --ok-soft:#14322A; --warn:#E3A43C;
+  --term-bg:#081018; --term-fg:#C9D6E2; --term-dim:#62748A; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
+img{max-width:100%}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:1rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;text-wrap:balance;margin:0}
+p{margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:clamp(16px,4vw,32px)}
+.mono{font-family:var(--f-mono)}
+
+/* Nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
+.brand{font-family:var(--f-mono);font-size:.9rem;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:8px}
+.brand .led{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.nav ul{list-style:none;display:flex;gap:4px;margin:0;padding:0}
+.nav ul a{display:block;padding:8px 12px;border-radius:var(--r);color:var(--muted);text-decoration:none;font-size:.92rem;font-weight:500}
+.nav ul a:hover{color:var(--ink);background:var(--sunk)}
+.menu-btn{display:none;background:none;border:1px solid var(--line);color:var(--ink);border-radius:var(--r);padding:6px 10px;font:500 .85rem var(--f-mono);cursor:pointer}
+@media (max-width:720px){
+  .menu-btn{display:block}
+  .nav ul{position:absolute;top:60px;left:0;right:0;flex-direction:column;background:var(--surface);border-bottom:1px solid var(--line);padding:8px 16px 16px}
+  .nav ul[data-open="false"]{display:none}
+}
+
+/* Hero */
+.hero{padding-block:clamp(48px,8vw,96px) clamp(40px,6vw,72px)}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(32px,5vw,64px);align-items:center}
+@media (max-width:880px){.hero .wrap{grid-template-columns:1fr}}
+.prompt{font-family:var(--f-mono);font-size:.88rem;color:var(--muted);margin-bottom:18px}
+.prompt b{color:var(--ok);font-weight:500}
+.hero h1{font-size:clamp(2.3rem,5.6vw,4rem);font-weight:700;letter-spacing:-.01em}
+.hero h1 span{color:var(--accent)}
+.lede{margin-top:20px;font-size:1.12rem;color:var(--muted);max-width:56ch}
+.status-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.pill{display:inline-flex;align-items:center;gap:8px;font:500 .82rem var(--f-mono);padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.pill.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.pill.ok::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:var(--r);font-weight:600;font-size:.95rem;text-decoration:none;border:1px solid var(--accent);transition:transform .15s,background .15s}
+.btn.primary{background:var(--accent);color:var(--surface)}
+.btn.ghost{color:var(--accent);background:transparent}
+.btn:hover{transform:translateY(-1px)}
+
+/* Topology diagram */
+.topo{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.topo-head{display:flex;justify-content:space-between;align-items:center;font:500 .75rem var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.topo svg{width:100%;height:auto;display:block}
+.topo .host{fill:var(--sunk);stroke:var(--line)}
+.topo .node{fill:var(--surface);stroke:var(--accent);stroke-width:1.5}
+.topo .osd{fill:var(--accent-soft);stroke:var(--accent)}
+.topo .ring{fill:none;stroke:var(--ok);stroke-width:2;stroke-dasharray:6 5}
+.topo .net{stroke:var(--muted);stroke-width:1.2}
+.topo text{font-family:var(--f-mono);fill:var(--ink)}
+.topo .lbl{fill:var(--muted);font-size:10px}
+.topo .ok{fill:var(--ok)}
+@media (prefers-reduced-motion:no-preference){.topo .ring{animation:flow 2.4s linear infinite}}
+@keyframes flow{to{stroke-dashoffset:-22}}
+
+/* Sections */
+section.bay{padding-block:clamp(56px,8vw,96px);border-top:1px solid var(--line)}
+.bay-label{display:flex;align-items:center;gap:10px;font:500 .78rem var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
+.bay-label::before{content:"";width:18px;height:10px;border:1.5px solid var(--accent);border-radius:2px}
+.bay h2{font-size:clamp(1.7rem,3.4vw,2.4rem);font-weight:600;margin-bottom:28px}
+
+/* About */
+.about{display:grid;grid-template-columns:1.2fr .8fr;gap:clamp(28px,5vw,56px)}
+@media (max-width:820px){.about{grid-template-columns:1fr}}
+.about p+p{margin-top:16px}
+.about .text{max-width:62ch;color:var(--ink)}
+.about .text p{color:var(--muted)}
+.about .text p strong{color:var(--ink);font-weight:600}
+.spec{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.spec dl{margin:0}
+.spec div{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.spec div:last-child{border-bottom:0}
+.spec dt{font:500 .78rem var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.spec dd{margin:0;font-weight:500;min-width:0}
+.interests{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:36px}
+@media (max-width:820px){.interests{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:420px){.interests{grid-template-columns:1fr}}
+.int{padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.int h3{font-size:1rem;font-weight:600;margin-bottom:6px}
+.int p{font-size:.88rem;color:var(--muted);line-height:1.5}
+.int .k{font:500 .72rem var(--f-mono);color:var(--accent);display:block;margin-bottom:8px}
+
+/* Project */
+.project{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.project-head{padding:clamp(22px,4vw,40px);border-bottom:1px solid var(--line);display:grid;gap:16px}
+.featured{display:inline-flex;align-self:start;justify-self:start;font:600 .72rem var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:5px 10px;border-radius:4px}
+.project-head h3{font-size:clamp(1.5rem,3.2vw,2.1rem);font-weight:700}
+.project-head p{color:var(--muted);max-width:70ch;font-size:1.04rem}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+@media (max-width:720px){.facts{grid-template-columns:repeat(2,1fr)}}
+.fact{padding:18px clamp(16px,3vw,28px);border-right:1px solid var(--line)}
+.fact:last-child{border-right:0}
+@media (max-width:720px){.fact:nth-child(2){border-right:0}.fact:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+.fact b{display:block;font:600 1.6rem var(--f-display);font-variant-numeric:tabular-nums}
+.fact span{font:500 .75rem var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.project-body{padding:clamp(22px,4vw,40px);display:grid;gap:44px}
+.sub{font:600 .8rem var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px}
+
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{display:inline-flex;align-items:center;gap:7px;font:500 .84rem var(--f-mono);padding:6px 11px;border-radius:5px;border:1px solid var(--line);background:var(--sunk);color:var(--ink)}
+.badge i{width:8px;height:8px;border-radius:2px;background:var(--c,var(--accent));font-style:normal}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,48px)}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+.two>*{min-width:0}
+
+.steps{list-style:none;margin:0;padding:0;counter-reset:s;display:grid;gap:0}
+.steps li{counter-increment:s;display:grid;grid-template-columns:36px 1fr;gap:12px;padding:14px 0;border-bottom:1px dashed var(--line)}
+.steps li:last-child{border-bottom:0}
+.steps li::before{content:counter(s,decimal-leading-zero);font:600 .82rem var(--f-mono);color:var(--accent);padding-top:3px}
+.steps h4{margin:0 0 4px;font:600 1rem var(--f-body)}
+.steps p{font-size:.92rem;color:var(--muted)}
+.steps code{font:.82rem var(--f-mono);background:var(--sunk);padding:1px 5px;border-radius:3px;color:var(--ink);overflow-wrap:anywhere}
+
+.skills{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.skills li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r)}
+.skills li::before{content:"✓";font:600 .8rem var(--f-mono);color:var(--ok);background:var(--ok-soft);width:22px;height:22px;flex:none;display:grid;place-items:center;border-radius:4px}
+.skills strong{display:block;font-weight:600;font-size:.95rem}
+.skills span{font-size:.86rem;color:var(--muted)}
+
+/* Terminal */
+.term{background:var(--term-bg);color:var(--term-fg);border-radius:8px;font:400 .8rem/1.6 var(--f-mono);overflow:hidden}
+.term-bar{display:flex;align-items:center;gap:6px;padding:9px 12px;border-bottom:1px solid #ffffff14;color:var(--term-dim);font-size:.72rem}
+.term-bar i{width:9px;height:9px;border-radius:50%;background:#ffffff22}
+.term pre{margin:0;padding:14px 16px;overflow-x:auto;white-space:pre}
+.term .p{color:#7FB0FF}.term .g{color:#5FD39B}.term .d{color:var(--term-dim)}.term .y{color:#F2C065}
+
+/* Incidencias */
+.issues{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:820px){.issues{grid-template-columns:1fr}}
+.issue{border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:8px;align-content:start}
+.issue .sym{font:500 .78rem var(--f-mono);color:var(--warn)}
+.issue h4{margin:0;font:600 .98rem var(--f-body)}
+.issue p{font-size:.88rem;color:var(--muted)}
+
+/* Gallery */
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media (max-width:720px){.gallery{grid-template-columns:1fr}}
+.shot{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--sunk);display:flex;flex-direction:column;min-width:0}
+.shot button{all:unset;cursor:zoom-in;display:block;aspect-ratio:16/10;max-width:100%;overflow:hidden;position:relative;background:var(--term-bg)}
+.shot button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.shot img{width:100%;height:100%;object-fit:cover;display:block}
+.shot .mock{position:absolute;inset:0;padding:14px 16px;font:400 .72rem/1.55 var(--f-mono);color:var(--term-fg);white-space:pre;overflow:hidden}
+.shot .mock .g{color:#5FD39B}.shot .mock .d{color:var(--term-dim)}.shot .mock .p{color:#7FB0FF}.shot .mock .y{color:#F2C065}
+.shot .tag{position:absolute;right:10px;bottom:10px;font:500 .66rem var(--f-mono);color:var(--term-dim);border:1px dashed #ffffff30;padding:3px 7px;border-radius:4px}
+.shot figcaption{padding:12px 16px;display:grid;gap:2px;background:var(--surface);border-top:1px solid var(--line)}
+.shot figcaption b{font-weight:600;font-size:.95rem}
+.shot figcaption span{font-size:.84rem;color:var(--muted)}
+
+.lightbox{position:fixed;inset:0;z-index:50;background:#05090ee6;display:grid;place-items:center;padding:24px 16px}
+.lightbox .frame{width:min(1000px,100%);max-height:90vh;display:grid;gap:10px}
+.lightbox .view{position:relative;aspect-ratio:16/10;max-width:100%;background:var(--term-bg);border-radius:10px;overflow:hidden}
+.lightbox .view .mock{font-size:clamp(.62rem,1.4vw,.95rem)}
+.lightbox .cap{color:#E3E9EF;font-size:.92rem;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.lightbox .close{background:none;border:1px solid #ffffff40;color:#E3E9EF;border-radius:var(--r);padding:6px 12px;font:500 .82rem var(--f-mono);cursor:pointer}
+
+/* Upcoming */
+.next{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+@media (max-width:820px){.next{grid-template-columns:1fr}}
+.next article{border:1px dashed var(--line);border-radius:10px;padding:20px;display:grid;gap:8px;align-content:start}
+.next .st{font:500 .72rem var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.next h3{font-size:1.1rem;font-weight:600}
+.next p{font-size:.9rem;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding-block:28px;font:400 .8rem var(--f-mono);color:var(--muted)}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Principal">
+  <div class="wrap">
+    <a class="brand" href="#inicio"><span class="led" aria-hidden="true"></span>tu-nombre@infra:~</a>
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menu">menú</button>
+    <ul id="menu" data-open="false">
+      <li><a href="#sobre-mi">Sobre mí</a></li>
+      <li><a href="#proyectos">Proyectos</a></li>
+      <li><a href="#galeria">Galería</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="inicio">
+  <div class="wrap">
+    <div>
+      <p class="prompt"><b>$</b> whoami</p>
+      <h1>Mateo Montano<br><span>Administrador de sistemas junior</span></h1>
+      <p class="lede">Estudiante de ASIR centrado en virtualización, sistemas Linux y Windows, redes e infraestructura. Monto laboratorios, los rompo y los arreglo, y documento lo que me parezca importante. Busco prácticas o empleo en sistemas.</p>
+      <div class="status-row">
+        <span class="pill ok">Disponible para prácticas</span>
+        <span class="pill">CFGS ASIR</span>
+        <span class="pill">Tu ciudad · remoto / presencial</span>
+      </div>
+      <div class="cta">
+        <a class="btn primary" href="#proyectos">Ver proyecto principal</a>
+
+      </div>
+    </div>
+
+    <figure class="topo" style="margin:0" aria-label="Topología del laboratorio: tres nodos Proxmox VE sobre un host Hyper-V, unidos por Ceph">
+      <div class="topo-head"><span>Topología del lab</span><span>3 nodos · Ceph</span></div>
+      <svg viewBox="0 0 420 300" role="img" aria-hidden="true">
+        <rect class="host" x="6" y="6" width="408" height="288" rx="10"/>
+        <text x="20" y="28" font-size="11" font-weight="600">HOST HYPER-V</text>
+        <text class="lbl" x="20" y="42">virtualización anidada · vSwitch interno</text>
+        <line class="net" x1="30" y1="70" x2="390" y2="70"/>
+        <text class="lbl" x="300" y="64">vmbr0 · gestión</text>
+        <g>
+          <line class="net" x1="80" y1="70" x2="80" y2="96"/>
+          <line class="net" x1="210" y1="70" x2="210" y2="96"/>
+          <line class="net" x1="340" y1="70" x2="340" y2="96"/>
+        </g>
+        <g>
+          <rect class="node" x="26" y="96" width="108" height="112" rx="7"/>
+          <text x="40" y="118" font-size="12" font-weight="600">pve1</text>
+          <text class="lbl" x="40" y="134">MON · MGR</text>
+          <rect class="osd" x="40" y="146" width="80" height="22" rx="4"/>
+          <text x="52" y="161" font-size="10">osd.0</text>
+          <circle class="ok" cx="118" cy="114" r="4"/>
+        </g>
+        <g>
+          <rect class="node" x="156" y="96" width="108" height="112" rx="7"/>
+          <text x="170" y="118" font-size="12" font-weight="600">pve2</text>
+          <text class="lbl" x="170" y="134">MON · MGR</text>
+          <rect class="osd" x="170" y="146" width="80" height="22" rx="4"/>
+          <text x="182" y="161" font-size="10">osd.1</text>
+          <circle class="ok" cx="248" cy="114" r="4"/>
+        </g>
+        <g>
+          <rect class="node" x="286" y="96" width="108" height="112" rx="7"/>
+          <text x="300" y="118" font-size="12" font-weight="600">pve3</text>
+          <text class="lbl" x="300" y="134">MON</text>
+          <rect class="osd" x="300" y="146" width="80" height="22" rx="4"/>
+          <text x="312" y="161" font-size="10">osd.2</text>
+          <circle class="ok" cx="378" cy="114" r="4"/>
+        </g>
+        <path class="ring" d="M80 168 L80 236 L340 236 L340 168 M210 168 L210 236"/>
+        <text class="lbl" x="30" y="256">red Ceph · réplica size=3 · min_size=2</text>
+        <rect x="236" y="250" width="160" height="30" rx="5" fill="none" stroke="var(--ok)"/>
+        <circle class="ok" cx="252" cy="265" r="4"/>
+        <text x="263" y="269" font-size="11" class="ok">HEALTH_OK</text>
+      </svg>
+    </figure>
+  </div>
+</header>
+
+<main>
+  <section class="bay" id="sobre-mi">
+    <div class="wrap">
+      <p class="bay-label">Sobre mí</p>
+      <h2>Aprendo infraestructura montándola</h2>
+      <div class="about">
+        <div class="text">
+          <p><strong>Estudio Administración de Sistemas Informáticos en Red (ASIR)</strong> y dedico parte de mi tiempo libre a laboratorios propios. Me interesa entender cómo encajan las piezas de un centro de datos: hipervisores, almacenamiento, red y los sistemas que corren encima.</p>
+          <p>Trabajo con <strong>Linux y Windows Server</strong> por igual, me manejo por SSH y línea de comandos, y cuando algo falla prefiero leer los logs antes que reinstalar. </p>
+          <p>Busco un equipo de sistemas o infraestructura donde aportar desde el primer día en tareas de soporte, despliegue y mantenimiento, y seguir aprendiendo de gente con experiencia.</p>
+        </div>
+        <div class="spec">
+          <dl>
+            <div><dt>Formación</dt><dd>CFGS ASIR · en curso</dd></div>
+            <div><dt>Objetivo</dt><dd>Prácticas o primer empleo en sistemas e infraestructura</dd></div>
+            <div><dt>Sistemas</dt><dd>Debian / Ubuntu, Proxmox VE, Windows Server</dd></div>
+            <div><dt>Idiomas</dt><dd>Español nativo · Inglés técnico</dd></div>
+            <div><dt>Ubicación</dt><dd>Marbella · disponible para desplazarme</dd></div>
+          </dl>
+        </div>
+      </div>
+      <div class="interests">
+        <div class="int"><span class="k">/virt</span><h3>Virtualización</h3><p>Hypervisores tipo 1, clusters, alta disponibilidad y migración de VMs.</p></div>
+        <div class="int"><span class="k">/sys</span><h3>Linux y Windows</h3><p>Servicios, usuarios, permisos, actualizaciones y automatización básica.</p></div>
+        <div class="int"><span class="k">/net</span><h3>Redes</h3><p>TCP/IP, subredes, VLAN, bridges y diagnóstico de conectividad.</p></div>
+        <div class="int"><span class="k">/storage</span><h3>Almacenamiento</h3><p>Almacenamiento distribuido con Ceph, réplicas y dispositivos de bloque.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bay" id="proyectos">
+    <div class="wrap">
+      <p class="bay-label">Proyectos</p>
+      <h2>Laboratorios realizados</h2>
+
+      <article class="project">
+        <div class="project-head">
+          <span class="featured">Proyecto principal</span>
+          <h3>Cluster Proxmox VE con Ceph sobre Hyper-V</h3>
+          <p>Diseño e implementación de un cluster de 3 nodos Proxmox VE virtualizados sobre Hyper-V. Configuré almacenamiento distribuido con Ceph: creación y gestión de OSDs, pools de almacenamiento y volúmenes RBD (RADOS Block Device) para alojar los discos de las máquinas virtuales. Realicé pruebas de conectividad, administré el cluster de forma centralizada y desplegué máquinas virtuales Linux y Windows.</p>
+        </div>
+
+        <div class="facts" role="list">
+          <div class="fact" role="listitem"><b>3</b><span>Nodos PVE</span></div>
+          <div class="fact" role="listitem"><b>3</b><span>OSDs Ceph</span></div>
+          <div class="fact" role="listitem"><b>×3</b><span>Réplicas por objeto</span></div>
+          <div class="fact" role="listitem"><b>2</b><span>SO invitados</span></div>
+        </div>
+
+        <div class="project-body">
+          <div>
+            <p class="sub">Tecnologías</p>
+            <div class="badges">
+              <span class="badge" style="--c:#E57000"><i></i>Proxmox VE</span>
+              <span class="badge" style="--c:#EF5C55"><i></i>Ceph</span>
+              <span class="badge" style="--c:#EF5C55"><i></i>RBD</span>
+              <span class="badge" style="--c:#2B88D8"><i></i>Hyper-V</span>
+              <span class="badge" style="--c:#C7A008"><i></i>Linux</span>
+              <span class="badge" style="--c:#2B88D8"><i></i>Windows Server</span>
+              <span class="badge" style="--c:#6B7C8F"><i></i>SSH</span>
+              <span class="badge" style="--c:#8A63D2"><i></i>Virtualización</span>
+              <span class="badge" style="--c:#23845A"><i></i>Redes TCP/IP</span>
+            </div>
+          </div>
+
+          <div class="two">
+            <div>
+              <p class="sub">Cómo lo monté</p>
+              <ol class="steps">
+                <li><div><h4>Preparar el host Hyper-V</h4><p>Tres VMs con virtualización anidada activada, switch virtual y suplantación de MAC para que las VMs internas tengan red: <code>Set-VMProcessor -ExposeVirtualizationExtensions $true</code></p></div></li>
+                <li><div><h4>Instalar Proxmox VE</h4><p>Instalación en los tres nodos con IP estática, hostname y resolución de nombres entre ellos.</p></div></li>
+                <li><div><h4>Crear el cluster</h4><p>Cluster creado en pve1 y nodos unidos por SSH: <code>pvecm create lab</code> · <code>pvecm add pve1</code></p></div></li>
+                <li><div><h4>Desplegar Ceph</h4><p>Instalación de Ceph, monitores y managers en los nodos, con red dedicada para el tráfico de réplica.</p></div></li>
+                <li><div><h4>Crear OSDs y pool</h4><p>Un disco dedicado por nodo como OSD y un pool replicado con <code>size=3</code> y <code>min_size=2</code>.</p></div></li>
+                <li><div><h4>Almacenamiento RBD</h4><p>Pool añadido como almacenamiento RBD del Datacenter para alojar los discos de las VMs.</p></div></li>
+                <li><div><h4>Desplegar y probar</h4><p>VMs Linux y Windows Server sobre RBD, pruebas de conectividad y comprobación del estado del cluster.</p></div></li>
+              </ol>
+            </div>
+            <div style="display:grid;gap:24px;align-content:start">
+              <div>
+                <p class="sub">Competencias demostradas</p>
+                <ul class="skills">
+                  <li><div><strong>Virtualización de infraestructuras</strong><span>Virtualización anidada y cluster de hipervisores</span></div></li>
+                  <li><div><strong>Administración Linux</strong><span>Proxmox (Debian), red, servicios y CLI</span></div></li>
+                  <li><div><strong>Administración Windows</strong><span>Hyper-V y Windows Server como invitado</span></div></li>
+                  <li><div><strong>Almacenamiento distribuido</strong><span>Ceph, OSDs, pools y RBD</span></div></li>
+                  <li><div><strong>Gestión de clusters</strong><span>Quórum y administración centralizada</span></div></li>
+                  <li><div><strong>Redes y conectividad</strong><span>Bridges, subredes y pruebas TCP/IP</span></div></li>
+                  <li><div><strong>Resolución de incidencias</strong><span>Diagnóstico con logs y comandos de estado</span></div></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p class="sub">Comprobación del cluster</p>
+            <div class="term">
+              <div class="term-bar"><i></i><i></i><i></i>&nbsp;root@pve1: ~</div>
+<pre><span class="p">root@pve1:~#</span> pvecm status | grep -E "Nodes|Quorate"
+Nodes:            3
+Quorate:          <span class="g">Yes</span>
+<span class="p">root@pve1:~#</span> ceph -s
+  cluster:
+    health: <span class="g">HEALTH_OK</span>
+  services:
+    mon: 3 daemons, quorum pve1,pve2,pve3
+    mgr: pve1(active), standbys: pve2
+    osd: 3 osds: <span class="g">3 up</span>, <span class="g">3 in</span>
+  data:
+    pools:   2 pools
+    pgs:     <span class="g">33 active+clean</span>
+<span class="p">root@pve1:~#</span> rbd ls vm-pool
+vm-100-disk-0
+vm-101-disk-0</pre>
+            </div>
+          </div>
+
+          <div>
+            <p class="sub">Incidencias resueltas</p>
+            <div class="issues">
+              <div class="issue"><span class="sym">KVM no disponible</span><h4>Virtualización anidada</h4><p>Las VMs no arrancaban en Proxmox. Activé las extensiones de virtualización en cada VM de Hyper-V con la VM apagada.</p></div>
+              <div class="issue"><span class="sym">VMs internas sin red</span><h4>Suplantación de MAC</h4><p>Los invitados no salían a la red a través del bridge. Habilité la suplantación de direcciones MAC en los adaptadores de Hyper-V.</p></div>
+              <div class="issue"><span class="sym">HEALTH_WARN · clock skew</span><h4>Sincronización horaria</h4><p>Ceph avisaba de desfase de reloj entre monitores. Lo corregí configurando NTP (chrony) en los tres nodos.</p></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <div class="next">
+        <article><span class="st">Próximo</span><h3>Directorio activo</h3><p>Dominio con Windows Server, GPOs y unión de clientes Linux y Windows.</p></article>
+        <article><span class="st">Próximo</span><h3>Alta disponibilidad en Proxmox</h3><p>HA sobre el cluster Ceph y pruebas de caída de un nodo.</p></article>
+        <article><span class="st">Próximo</span><h3>Monitorización</h3><p>Métricas del cluster y alertas con Prometheus y Grafana.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="bay" id="galeria">
+    <div class="wrap">
+      <p class="bay-label">Galería</p>
+      <h2>Capturas del laboratorio</h2>
+      <div class="gallery" id="gallery">
+        <!-- Para usar tus capturas reales, sustituye el bloque <div class="mock">…</div> de cada figura por <img src="capturas/archivo.png" alt="descripción"> -->
+        <figure class="shot">
+          <button type="button" aria-label="Ampliar captura: vista del cluster">
+<div class="mock"><span class="d">Datacenter (lab) › Resumen</span>
+
+<span class="y">Cluster</span>  lab        Quorate: <span class="g">Sí</span>
+Nodos      3 en línea   0 caídos
+
+<span class="d">NODO   ESTADO   CPU     RAM</span>
+pve1   <span class="g">●</span> online  6 %   4.1/8 GiB
+pve2   <span class="g">●</span> online  4 %   3.8/8 GiB
+pve3   <span class="g">●</span> online  5 %   3.6/8 GiB
+
+<span class="d">Invitados: 2 VMs · 0 CTs</span></div>
+            <span class="tag">captura de ejemplo</span>
+          </button>
+          <figcaption><b>Vista del cluster</b><span>Datacenter con los tres nodos en línea y quórum</span></figcaption>
+        </figure>
+
+        <figure class="shot">
+          <button type="button" aria-label="Ampliar captura: Ceph Health">
+<div class="mock"><span class="p">root@pve1:~#</span> ceph health detail
+<span class="g">HEALTH_OK</span>
+
+<span class="p">root@pve1:~#</span> ceph df
+<span class="d">--- RAW STORAGE ---</span>
+CLASS  SIZE    AVAIL   USED
+hdd    96 GiB  88 GiB  8.1 GiB
+<span class="d">--- POOLS ---</span>
+POOL     ID  STORED  %USED
+vm-pool   2  2.6 GiB  3.1</div>
+            <span class="tag">captura de ejemplo</span>
+          </button>
+          <figcaption><b>Ceph Health</b><span>Estado del cluster de almacenamiento y uso de pools</span></figcaption>
+        </figure>
+
+        <figure class="shot">
+          <button type="button" aria-label="Ampliar captura: OSDs">
+<div class="mock"><span class="p">root@pve1:~#</span> ceph osd tree
+<span class="d">ID  CLASS  WEIGHT   TYPE NAME      STATUS</span>
+-1         0.09357  root default
+-3         0.03119      host pve1
+ 0  hdd    0.03119          osd.0   <span class="g">up</span>
+-5         0.03119      host pve2
+ 1  hdd    0.03119          osd.1   <span class="g">up</span>
+-7         0.03119      host pve3
+ 2  hdd    0.03119          osd.2   <span class="g">up</span></div>
+            <span class="tag">captura de ejemplo</span>
+          </button>
+          <figcaption><b>OSDs</b><span>Un OSD por nodo, todos up e in</span></figcaption>
+        </figure>
+
+        <figure class="shot">
+          <button type="button" aria-label="Ampliar captura: volúmenes RBD">
+<div class="mock"><span class="p">root@pve1:~#</span> rbd ls -l vm-pool
+<span class="d">NAME            SIZE    FORMAT</span>
+vm-100-disk-0   32 GiB  2
+vm-101-disk-0   40 GiB  2
+
+<span class="p">root@pve1:~#</span> rbd info vm-pool/vm-100-disk-0
+rbd image 'vm-100-disk-0':
+    size 32 GiB in 8192 objects
+    order 22 (4 MiB objects)
+    features: layering, exclusive-lock</div>
+            <span class="tag">captura de ejemplo</span>
+          </button>
+          <figcaption><b>Volúmenes RBD</b><span>Discos de las VMs Linux y Windows sobre Ceph</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  
+</main>
+
+<footer>
+  <div class="wrap"><span>© 2026 Mateo Montano · Portfolio ASIR</span><span>uptime: aprendiendo</span></div>
+</footer>
+
+<div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Captura ampliada">
+  <div class="frame">
+    <div class="view" id="lbView"></div>
+    <div class="cap"><span id="lbCap"></span><button class="close" id="lbClose" type="button">Cerrar ✕</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var btn=document.getElementById('menuBtn'),menu=document.getElementById('menu');
+  btn.addEventListener('click',function(){var o=menu.dataset.open!=='true';menu.dataset.open=o;btn.setAttribute('aria-expanded',o)});
+  menu.addEventListener('click',function(e){if(e.target.tagName==='A'){menu.dataset.open='false';btn.setAttribute('aria-expanded','false')}});
+
+  var lb=document.getElementById('lightbox'),view=document.getElementById('lbView'),cap=document.getElementById('lbCap'),last=null;
+  document.querySelectorAll('.shot button').forEach(function(b){
+    b.addEventListener('click',function(){
+      last=b;var c=b.cloneNode(true);var t=c.querySelector('.tag');if(t)t.remove();
+      view.innerHTML=c.innerHTML;
+      cap.textContent=b.parentNode.querySelector('figcaption b').textContent;
+      lb.hidden=false;document.getElementById('lbClose').focus();
+    });
+  });
+  function close(){lb.hidden=true;if(last)last.focus()}
+  document.getElementById('lbClose').addEventListener('click',close);
+  lb.addEventListener('click',function(e){if(e.target===lb)close()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!lb.hidden)close()});
+
+  
+})();
+</script>
+</body>
+</html>
